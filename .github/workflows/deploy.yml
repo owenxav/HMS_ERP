@@ -23,7 +23,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'  # Upgraded PHP version
+          php-version: '8.3'  # Upgraded PHP version
 
       - name: Check if composer.json exists
         id: check_files
@@ -52,7 +52,6 @@ jobs:
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
       - name: Download artifact from build job
@@ -60,17 +59,31 @@ jobs:
         with:
           name: php-app
 
+      - name: Install unzip (if missing)
+        run: sudo apt-get install -y unzip
+
       - name: Unzip artifact for deployment
         run: |
           unzip release.zip -d ${{ runner.temp }}/deployment
-          shopt -s dotglob
-          mv ${{ runner.temp }}/deployment/* .
+          echo "Checking deployment directory contents..."
+          ls -la ${{ runner.temp }}/deployment
+
+      - name: Move extracted files to workspace
+        run: |
+          echo "Moving extracted files..."
+          rsync -av ${{ runner.temp }}/deployment/ . --remove-source-files
+          rm -rf ${{ runner.temp }}/deployment
+          ls -la  # Verify files were moved
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
+        id: deploy
         with:
           app-name: 'pilotspanbackend'
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
+      - name: Verify deployment success
+        run: echo "Deployment completed successfully. Check Azure Portal for status."
+
