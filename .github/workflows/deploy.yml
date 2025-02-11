@@ -38,8 +38,18 @@ jobs:
           composer install --no-dev --prefer-dist --no-progress
           composer dump-autoload --optimize
 
+      - name: Optimize Laravel
+        run: |
+          php artisan cache:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      - name: Set permissions
+        run: chmod -R 775 storage bootstrap/cache
+
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "*.git*"
+        run: zip -r release.zip . -x "*/.git/*" "*/node_modules/*" "storage/logs/*" ".env" "tests/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
