@@ -31,25 +31,34 @@ jobs:
           composer -V
 
       - name: Check if composer.json exists
-        id: check_files
+        id: check_composer_json
         uses: andstor/file-existence-action@v1
         with:
           files: 'composer.json'
 
+      - name: Check if composer.lock exists
+        id: check_composer_lock
+        uses: andstor/file-existence-action@v1
+        with:
+          files: 'composer.lock'
+
+      - name: Ensure correct working directory
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+
       - name: Install dependencies if composer.json exists
-        if: steps.check_files.outputs.exists == 'true'
+        if: steps.check_composer_json.outputs.exists == 'true'
         run: |
           echo "Running composer install..."
           composer install --no-dev --prefer-dist --no-progress --no-interaction
           composer dump-autoload --optimize
 
-      - name: Debug - List Files in Workspace
-        run: ls -la
-
       - name: Verify vendor directory
         run: |
           if [ ! -d "vendor" ]; then
             echo "Error: vendor directory is missing! Composer install may have failed."
+            composer install --no-dev --prefer-dist --no-progress --no-interaction
             exit 1
           else
             echo "Vendor directory exists."
@@ -57,10 +66,10 @@ jobs:
 
       - name: Run Laravel Optimizations
         run: |
-          php artisan cache:clear || echo "cache:clear failed, skipping..."
-          php artisan config:cache || echo "config:cache failed, skipping..."
-          php artisan route:cache || echo "route:cache failed, skipping..."
-          php artisan view:cache || echo "view:cache failed, skipping..."
+          php artisan cache:clear
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
         continue-on-error: true
 
       - name: Set permissions
