@@ -35,8 +35,12 @@ jobs:
         if: steps.check_files.outputs.exists == 'true'
         run: |
           composer validate --no-check-publish
+          composer clear-cache  # Clear composer cache to prevent corruption
           composer install --no-dev --prefer-dist --no-progress
           composer dump-autoload --optimize
+
+      - name: Set correct file permissions
+        run: chmod -R 755 .
 
       - name: Zip artifact for deployment
         run: zip -r release.zip . -x "*.git*"
@@ -71,7 +75,8 @@ jobs:
       - name: Move extracted files to workspace
         run: |
           echo "Moving extracted files..."
-          rsync -av ${{ runner.temp }}/deployment/ . --remove-source-files
+          rsync -av ${{ runner.temp }}/deployment/ . 
+          find ${{ runner.temp }}/deployment -type f -delete  # Ensure cleanup
           rm -rf ${{ runner.temp }}/deployment
           ls -la  # Verify files were moved
 
@@ -86,4 +91,3 @@ jobs:
 
       - name: Verify deployment success
         run: echo "Deployment completed successfully. Check Azure Portal for status."
-
