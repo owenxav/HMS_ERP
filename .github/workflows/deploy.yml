@@ -9,11 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read # Required for actions/checkout
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # Required for actions/checkout
 
     steps:
       - name: Checkout repository
@@ -22,7 +23,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.0'
+          php-version: '8.1'  # Upgraded PHP version
 
       - name: Check if composer.json exists
         id: check_files
@@ -31,7 +32,7 @@ jobs:
           files: 'composer.json'
 
       - name: Install dependencies if composer.json exists
-        if: steps.check_files.outputs.files_exists == 'true'
+        if: steps.check_files.outputs.exists == 'true'
         run: |
           composer validate --no-check-publish
           composer install --no-dev --prefer-dist --no-progress
@@ -60,7 +61,10 @@ jobs:
           name: php-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip -d ${{ runner.temp }}/deployment && mv ${{ runner.temp }}/deployment/* .
+        run: |
+          unzip release.zip -d ${{ runner.temp }}/deployment
+          shopt -s dotglob
+          mv ${{ runner.temp }}/deployment/* .
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -70,4 +74,3 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          
