@@ -42,7 +42,7 @@ jobs:
 
       - name: Update Dependencies
         run: |
-          composer update --no-dev --prefer-dist --no-progress --no-interaction
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
           composer dump-autoload --optimize
 
       - name: Ensure vendor directory exists
@@ -64,7 +64,7 @@ jobs:
         run: chmod -R 775 storage bootstrap/cache
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "*/.git/*" "*/node_modules/*" "storage/logs/*" ".env" "tests/*"
+        run: zip -r release.zip . -x ".git/*" "node_modules/*" "storage/logs/*" ".env" "tests/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
