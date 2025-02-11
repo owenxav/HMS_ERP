@@ -30,6 +30,9 @@ jobs:
             composer dump-autoload --optimize
           "
 
+      - name: Fix ownership issues
+        run: sudo chown -R $(whoami):$(whoami) .
+
       - name: Set correct file permissions
         run: chmod -R 755 .
 
