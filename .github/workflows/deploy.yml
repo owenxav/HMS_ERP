@@ -83,8 +83,15 @@ jobs:
       - name: Ensure vendor dependencies are installed
         run: |
           if [ ! -f "/home/site/wwwroot/vendor/autoload.php" ]; then
-            echo "vendor/autoload.php missing. Running composer install..."
+            echo "vendor/autoload.php missing. Running composer update and install..."
+            
+            # Ensure the lock file is updated
+            composer update --lock
+            
+            # Install dependencies correctly
             composer install --no-dev --prefer-dist --no-progress
+            
+            # Optimize autoloading
             composer dump-autoload --optimize
           else
             echo "vendor/autoload.php found. Skipping composer install."
