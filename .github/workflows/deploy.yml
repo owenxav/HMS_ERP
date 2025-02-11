@@ -20,9 +20,9 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'  # Upgraded PHP version
+          php-version: '8.3'
 
-      - name: Verify Composer and PHP Version
+      - name: Verify PHP and Composer Version
         run: |
           php -v
           composer -V
@@ -33,38 +33,26 @@ jobs:
         with:
           files: 'composer.json'
 
-      - name: Check if composer.lock exists
-        id: check_composer_lock
-        uses: andstor/file-existence-action@v1
-        with:
-          files: 'composer.lock'
-
-      - name: Ensure correct working directory
+      - name: Remove fideloper/proxy (Fix Laravel 10 Conflict)
         run: |
-          echo "Current directory: $(pwd)"
-          ls -la
+          composer remove fideloper/proxy || true
 
-      - name: Clean and Update Dependencies
+      - name: Clear Config Cache
+        run: php artisan config:clear || true
+
+      - name: Update Dependencies
         run: |
-          echo "Checking for outdated dependencies..."
-          if [ -f "composer.lock" ]; then
-            rm -f composer.lock
-          fi
-          rm -rf vendor
-          echo "Running composer update..."
           composer update --no-dev --prefer-dist --no-progress --no-interaction
           composer dump-autoload --optimize
 
-      - name: Verify vendor directory
+      - name: Ensure vendor directory exists
         run: |
           if [ ! -d "vendor" ]; then
-            echo "Error: vendor directory is missing! Composer update may have failed."
+            echo "Error: vendor directory is missing!"
             exit 1
-          else
-            echo "Vendor directory exists."
           fi
 
-      - name: Run Laravel Optimizations
+      - name: Optimize Laravel
         run: |
           php artisan cache:clear
           php artisan config:clear
