@@ -24,6 +24,8 @@ jobs:
             curl -sS https://getcomposer.org/installer | php &&
             mv composer.phar /usr/local/bin/composer &&
             composer validate --no-check-publish &&
+            composer clear-cache &&
+            composer update --no-interaction --prefer-dist &&
             composer install --no-dev --prefer-dist --no-progress &&
             composer dump-autoload --optimize
           "
