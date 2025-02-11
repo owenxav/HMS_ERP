@@ -1,3 +1,6 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
 name: Build and deploy PHP app to Azure Web App - pilotspanbackend
 
 on:
@@ -20,57 +23,23 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
-          extensions: mbstring, bcmath, gd, pdo_mysql, zip
-          tools: composer:v2
-
-      - name: Verify PHP and Composer Version
-        run: |
-          php -v
-          composer -V
+          php-version: '8.1'  # Upgraded PHP version
 
       - name: Check if composer.json exists
-        id: check_composer_json
+        id: check_files
         uses: andstor/file-existence-action@v1
         with:
           files: 'composer.json'
 
-      - name: Remove fideloper/proxy (Fix Laravel 10 Conflict)
+      - name: Install dependencies if composer.json exists
+        if: steps.check_files.outputs.exists == 'true'
         run: |
-          composer remove fideloper/proxy || true
-
-      - name: Clear Config Cache
-        run: php artisan config:clear || true
-
-      - name: Update Dependencies
-        run: |
-          composer update --with-all-dependencies --no-dev --prefer-dist --no-progress --no-interaction
-          composer install --no-dev --prefer-dist --no-progress --no-interaction
+          composer validate --no-check-publish
+          composer install --no-dev --prefer-dist --no-progress
           composer dump-autoload --optimize
 
-      - name: Ensure vendor directory exists
-        run: |
-          if [ ! -d "vendor" ]; then
-            echo "Error: vendor directory is missing!"
-            exit 1
-          fi
-
-      - name: Run Laravel Migrations
-        run: php artisan migrate --force || true
-
-      - name: Optimize Laravel
-        run: |
-          php artisan cache:clear
-          php artisan config:clear
-          php artisan route:clear
-          php artisan view:clear
-        continue-on-error: true
-
-      - name: Set Permissions
-        run: chmod -R 775 storage bootstrap/cache
-
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x ".git/*" "node_modules/*" "storage/logs/*" ".env" "tests/*"
+        run: zip -r release.zip . -x "*.git*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
